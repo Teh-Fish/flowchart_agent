@@ -2,7 +2,6 @@ from langgraph.graph import StateGraph, END, MessagesState
 from langchain_core.messages import HumanMessage
 from draw_utils import Node, recursive_draw, draw_end_node
 from openai import OpenAI
-from typing import TypedDict
 import drawpyo as pyo
 from dotenv import load_dotenv
 import json
@@ -12,9 +11,7 @@ load_dotenv('api.env')
 
 
 class DiagramState(MessagesState):
-    file: pyo.File
     nodes: list[Node]
-    page: pyo.Page
     global_size: int
 
 
@@ -25,7 +22,7 @@ def create_node_list(state: DiagramState) -> DiagramState:
     Node objects indexed in DFS order (yes-first traversal).
     """
     client = OpenAI(
-        api_key= os.environ.get('deep_seek_api_key'),
+        api_key= os.environ.get('deepseek_api_key'),
         base_url= 'https://api.deepseek.com'
     )
 
@@ -115,19 +112,12 @@ Return ONLY the JSON object. No markdown fences, no explanation."""
 
     return {**state, "nodes": nodes, "global_size": size}
 
-
-def create_file_and_page(state: DiagramState) -> DiagramState:
+def create_diagram(state: DiagramState) -> DiagramState:
     file = pyo.File()
     file.file_path = "./outputs"
     file.file_name = "diagram.drawio"
     page = pyo.Page(file=file)
-    return {**state, "file": file, "page": page}
-
-
-def create_diagram(state: DiagramState) -> DiagramState:
-    file = state["file"]
     nodes = state["nodes"]
-    page = state["page"]
     size = state["global_size"]
     recursive_draw(
         node_index=0,
@@ -141,16 +131,15 @@ def create_diagram(state: DiagramState) -> DiagramState:
                   node_list= nodes,
                   size= size)
     file.write()
+    return state
 
 
 workflow = StateGraph(DiagramState)
 workflow.add_node("create_node_list", create_node_list)
-workflow.add_node("create_page", create_file_and_page)
 workflow.add_node("create_diagram", create_diagram)
 
 workflow.set_entry_point("create_node_list")
-workflow.add_edge("create_node_list", "create_page")
-workflow.add_edge("create_page", "create_diagram")
+workflow.add_edge("create_node_list", "create_diagram")
 
 app = workflow.compile()
 
