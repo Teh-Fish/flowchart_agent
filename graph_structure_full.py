@@ -149,19 +149,19 @@ workflow.add_edge("create_page", "create_diagram")
 app = workflow.compile()
 
 
-# Test
-procedure = (
-    "First we send a request to update the information, then we check the status, if the status is ok, we update the information"
-    "Else, check if deletion is possible, if yes, check for reliant data, if yes don't delete, else delete"
-    "if deletion is not possible, try and update the special code, if yes allow update, else don't"
-)
+if __name__ == '__main__':
+    procedure = (
+        "First we send a request to update the information, then we check the status, if the status is ok, we update the information"
+        "Else, check if deletion is possible, if yes, check for reliant data, if yes don't delete, else delete"
+        "if deletion is not possible, try and update the special code, if yes allow update, else don't"
+    )
 
-test_state = DiagramState(
-    messages=[HumanMessage(content=procedure)],
-    global_size=100,
-)
+    test_state = DiagramState(
+        messages=[HumanMessage(content=procedure)],
+        global_size=100,
+    )
 
-result = app.invoke(test_state)
-print("Generated nodes:")
-for i, node in enumerate(result["nodes"]):
-    print(f"  [{i}] {node}")
+    result = app.invoke(test_state)
+    print("Generated nodes:")
+    for i, node in enumerate(result["nodes"]):
+        print(f"  [{i}] {node}")
