@@ -1,6 +1,6 @@
 from langgraph.graph import StateGraph, END, MessagesState
 from langchain_core.messages import HumanMessage
-from draw_utils import Node, recursive_draw
+from draw_utils import Node, recursive_draw, draw_end_node
 from openai import OpenAI
 from typing import TypedDict
 import drawpyo as pyo
@@ -49,7 +49,8 @@ You are a flowchart node builder. Given a plain-text procedure description, \
 produce a JSON object {"nodes": [...]} where each node represents one step, \
 ordered strictly by Depth-First Search (DFS) — always follow the YES branch \
 to its terminal end before assigning any index to nodes on the NO branch. \
-ALWAYS begins with a start_1 node.
+ALWAYS begins with a start_1 node. If the user ask for a specific size, set \
+that as the size for the json output, else default to 100.
 
 Node schema:
   label   : concise step name (string)
@@ -71,7 +72,7 @@ DFS indexing rules:
 ────────────────────────────────────────────
 EXAMPLE
 Procedure: "Check stock. If available, pack the item then ship it. \
-If unavailable, notify the customer."
+If unavailable, notify the customer. Each node size should be 100"
 
 DFS walk:
   0 → Start
@@ -88,7 +89,8 @@ Output:
     {"label": "Pack item",          "type": "process",  "contain": [3]},
     {"label": "Ship it",            "type": "process",  "contain": []},
     {"label": "Notify customer",    "type": "process",  "contain": []}
-  ]
+  ],
+  "size": 100
 }
 ────────────────────────────────────────────
 Return ONLY the JSON object. No markdown fences, no explanation."""
@@ -109,8 +111,9 @@ Return ONLY the JSON object. No markdown fences, no explanation."""
         Node(label=n["label"], type=n["type"], contain=n["contain"])
         for n in data["nodes"]
     ]
+    size = data["size"]
 
-    return {**state, "nodes": nodes}
+    return {**state, "nodes": nodes, "global_size": size}
 
 
 def create_file_and_page(state: DiagramState) -> DiagramState:
@@ -134,6 +137,9 @@ def create_diagram(state: DiagramState) -> DiagramState:
         x_coord=None,
         y_coord=None,
     )
+    draw_end_node(page= page,
+                  node_list= nodes,
+                  size= size)
     file.write()
 
 
@@ -150,15 +156,19 @@ app = workflow.compile()
 
 
 if __name__ == '__main__':
+    # procedure = (
+    #     "First we send a request to update the information, then we check the status, if the status is ok, we update the information"
+    #     "Else, check if deletion is possible, if yes, check for reliant data, if yes don't delete, else delete"
+    #     "if deletion is not possible, try and update the special code, if yes allow update, else don't"
+    # )
+
     procedure = (
-        "First we send a request to update the information, then we check the status, if the status is ok, we update the information"
-        "Else, check if deletion is possible, if yes, check for reliant data, if yes don't delete, else delete"
-        "if deletion is not possible, try and update the special code, if yes allow update, else don't"
+        "First create a new category code, then we check for duplicate, if there's a duplicate,"
+        "notify the user then loop back to create a new category code, else create a new category code then end"
     )
 
     test_state = DiagramState(
         messages=[HumanMessage(content=procedure)],
-        global_size=100,
     )
 
     result = app.invoke(test_state)
