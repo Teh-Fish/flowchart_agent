@@ -37,15 +37,6 @@ DO NOT manually add an end node to the description parse to the tool.
 
 """)
 
-# def chat(history: list, user_input: str) -> str:
-#     history.append(HumanMessage(content= user_input))
-#     print(history)
-#     response = llm.invoke({"messages": [system_message] + history})
-#     reply = response['messages'][-1].content
-#     history.append(AIMessage(content=reply))
-#     return reply
- 
- 
 def main():
     history = []
     print("Type '/new' to start a fresh session, '/quit' to exit.\n")
