@@ -7,8 +7,11 @@ from dotenv import load_dotenv
 import json
 import os
 
-load_dotenv('api.env')
-
+load_dotenv('config.env')
+# Load config
+model = os.environ.get('model')
+reasoning_effort = os.environ.get('reasoning_effort')
+thinking = os.environ.get('thinking')
 
 class DiagramState(MessagesState):
     nodes: list[Node]
@@ -95,12 +98,14 @@ Output:
 Return ONLY the JSON object. No markdown fences, no explanation."""
 
     response = client.chat.completions.create(
-        model="deepseek-v4-flash",
+        model= model,
         messages=[
             {"role": "system", "content": SYSTEM_PROMPT},
             {"role": "user", "content": procedure_text},
         ],
         response_format={"type": "json_object"},
+        reasoning_effort= reasoning_effort,
+        extra_body= {"thinking": {"type": thinking}}
     )
 
     raw = response.choices[0].message.content

@@ -6,12 +6,18 @@ from graph_structure_full import app, DiagramState
 from dotenv import load_dotenv
 import os
 
+load_dotenv('config.env')
+# Load config
+model = os.environ.get('model')
+reasoning_effort = os.environ.get('reasoning_effort')
+thinking = os.environ.get('thinking')
 
-load_dotenv('api.env')
 llm = ChatOpenAI(
     api_key= os.environ.get('deepseek_api_key'),
     base_url= 'https://api.deepseek.com',
-    model= "deepseek-v4-flash"
+    model= model,
+    reasoning_effort= reasoning_effort,
+    extra_body= {'thinking': {'type': thinking}}
 )
 
 @tool
