@@ -1,7 +1,7 @@
 from langchain.agents import create_agent
 from langchain.tools import tool
 from langchain_openai import ChatOpenAI
-from langchain.messages import HumanMessage, SystemMessage
+from langchain.messages import HumanMessage, SystemMessage, AIMessage
 from graph_structure_full import app, DiagramState
 from dotenv import load_dotenv
 import os
@@ -25,14 +25,59 @@ tools = [create_flowchart_tool]
 llm = create_agent(llm, tools)
 
 chat_history = []
-message = [
-    SystemMessage(content= "You are a helpful office assistant, if the user demands a flowchart, only use the provided create_flowchart_tool" \
-    "parse exactly the user's description of the process to the tool"),
-    HumanMessage(content= "First we send a request to update the information, then we check the status, if the status is ok, we update the information"
-        "Else, check if deletion is possible, if yes, check for reliant data, if yes don't delete, else delete"
-        "if deletion is not possible, try and update the special code, if yes allow update, else don't")
-]
 
-response = llm.invoke({"messages":message})
-print(response['messages'][-1].content)
+system_message = SystemMessage(content=
+""" You are a helpful office assistant, if the user demands a flowchart,
+only use the provided create_flowchart_tool and nothing else.
+Parse exactly the user's description of the process to the tool.
+If the user demands any changes, refernce the full "nodes" object returned
+from the create_flowchart_tool to make changes. ALWAYS use the create_flowchart_tool
+to update the file for any changes.
+DO NOT manually add an end node to the description parse to the tool.
+
+""")
+
+# def chat(history: list, user_input: str) -> str:
+#     history.append(HumanMessage(content= user_input))
+#     print(history)
+#     response = llm.invoke({"messages": [system_message] + history})
+#     reply = response['messages'][-1].content
+#     history.append(AIMessage(content=reply))
+#     return reply
+ 
+ 
+def main():
+    history = []
+    print("Type '/new' to start a fresh session, '/quit' to exit.\n")
+ 
+    while True:
+        try:
+            user_input = input("You: ").strip()
+            human_message = HumanMessage(user_input)
+        except (EOFError, KeyboardInterrupt):
+            print("\nGoodbye!")
+            break
+ 
+        if not user_input:
+            continue
+ 
+        if user_input == "/quit":
+            print("Goodbye!")
+            break
+ 
+        if user_input == "/new":
+            history.clear()
+            print("--- New session ---\n")
+            continue
+        
+        history.append(human_message)
+        response = llm.invoke({'messages':history})
+        reply = response['messages'][-1].content
+        ai_message = AIMessage(content= reply)
+        history.append(ai_message)
+        print(f"\nAssistant: {reply}\n")
+ 
+ 
+if __name__ == "__main__":
+    main()
 
