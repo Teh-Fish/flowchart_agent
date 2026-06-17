@@ -47,7 +47,9 @@ produce a JSON object {"nodes": [...]} where each node represents one step, \
 ordered strictly by Depth-First Search (DFS) — always follow the YES branch \
 to its terminal end before assigning any index to nodes on the NO branch. \
 ALWAYS begins with a start_1 node. If the user ask for a specific size, set \
-that as the size for the json output, else default to 100.
+that as the size for the json output, else default to 100. \
+DO NOT add an end node to the JSON object, leave the final step as a leave \
+with no child index
 
 Node schema:
   label   : concise step name (string)
